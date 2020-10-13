@@ -27,8 +27,14 @@ func webServer() {
 
 		w.Write([]byte("Hello XRay Go SDK Customer!"))
 	})))
-	log.Println("SampleApp is listening on port 8000. Visit localhost:8000/ in your browser to generate segments on incoming request!")
-	http.ListenAndServe(":8000", nil)
+
+	listenAddress := os.Getenv("LISTEN_ADDRESS")
+	if listenAddress == "" {
+		listenAddress = ":8000"
+	}
+
+	log.Printf("SampleApp is listening on %s !", listenAddress)
+	http.ListenAndServe(listenAddress, nil)
 }
 
 // test downstream aws calls
@@ -37,7 +43,7 @@ func testAWSCalls() {
 	ctx, root := xray.BeginSegment(context.Background(), "AWS SDK Calls")
 	defer root.Close(nil)
 
-	awsSess, err := session.NewSessionWithOptions(session.Options{SharedConfigState: session.SharedConfigEnable,})
+	awsSess, err := session.NewSessionWithOptions(session.Options{SharedConfigState: session.SharedConfigEnable})
 	if err != nil {
 		log.Fatalf("failed to open aws session")
 	}
@@ -132,4 +138,3 @@ func main() {
 	time.Sleep(1 * time.Second)
 	webServer() // Upstream calls
 }
-
